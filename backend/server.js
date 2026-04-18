@@ -5,23 +5,22 @@ const Groq = require('groq-sdk');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Middleware
-const allowedOrigins = ['http://localhost:5173', process.env.FRONTEND_URL];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://llm-shield.vercel.app'
+];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
-         return callback(null, true); // Fallback for various localhosts in dev
-      }
-      return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
-    }
-    return callback(null, true);
-  }
+  origin: allowedOrigins,
+  credentials: true
 }));
 app.use(express.json());
 
@@ -252,14 +251,24 @@ app.get('/api/history', (req, res) => {
   res.json(scanHistory);
 });
 
+app.post('/test', (req, res) => {
+  console.log('Received payload at /test:', req.body);
+  res.json({ message: 'Integration successful', received: req.body });
+});
+
 app.post('/api/scan', async (req, res) => {
+  console.log(`[API /scan] Request received. AI Enabled: ${req.body.ai_enabled}`);
   const prompt = req.body.prompt;
   const ai_enabled = req.body.ai_enabled || false;
+  
   if (!prompt || typeof prompt !== 'string') {
+    console.error('[API /scan] Error: Invalid prompt');
     return res.status(400).json({ error: 'A valid string prompt is required.' });
   }
 
+  console.log('[API /scan] Analyzing prompt with rules/AI engine...');
   const result = await analyzePrompt(prompt, ai_enabled);
+  console.log('[API /scan] Analysis complete. Risk:', result.risk);
   res.json(result);
 });
 

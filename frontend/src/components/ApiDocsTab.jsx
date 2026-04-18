@@ -11,9 +11,10 @@ export default function ApiDocsTab() {
   };
 
   const getCodeSnippet = (language) => {
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     switch (language) {
       case 'JavaScript':
-        return `fetch('http://localhost:5000/api/scan', {
+        return `fetch('${API_BASE}/api/scan', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ 
@@ -26,7 +27,7 @@ export default function ApiDocsTab() {
       case 'Python':
         return `import requests
 
-url = 'http://localhost:5000/api/scan'
+url = '${API_BASE}/api/scan'
 payload = {
     "prompt": "your prompt here",
     "ai_enabled": True
@@ -35,7 +36,7 @@ payload = {
 response = requests.post(url, json=payload)
 print(response.json())`;
       case 'curl':
-        return `curl -X POST http://localhost:5000/api/scan \\
+        return `curl -X POST ${API_BASE}/api/scan \\
   -H "Content-Type: application/json" \\
   -d '{"prompt": "your prompt here", "ai_enabled": true}'`;
       default:

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { AlertTriangle, CheckCircle, ShieldAlert, Loader, Activity, Cpu } from 'lucide-react';
 
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`;
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`;
 
 export default function ScannerTab({ onApiCall }) {
   const [prompt, setPrompt] = useState('');
@@ -14,10 +13,13 @@ export default function ScannerTab({ onApiCall }) {
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/history`);
-      setHistory(res.data);
+      console.log('Fetching history from:', `${API_BASE}/history`);
+      const response = await fetch(`${API_BASE}/history`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      setHistory(data);
     } catch (err) {
-      console.error(err);
+      console.error('Fetch history error:', err);
     }
   };
 
@@ -33,11 +35,24 @@ export default function ScannerTab({ onApiCall }) {
     onApiCall();
 
     try {
-      const res = await axios.post(`${API_BASE}/scan`, { prompt, ai_enabled: aiEnabled });
-      setResult(res.data);
+      console.log('Sending scan request to:', `${API_BASE}/scan`);
+      const response = await fetch(`${API_BASE}/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, ai_enabled: aiEnabled })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'API returned an error');
+      }
+      
+      console.log('Scan completed successfully:', data);
+      setResult(data);
       fetchHistory();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to connect to API. Is the backend running?');
+      console.error('Scan error:', err);
+      setError(err.message || 'Failed to connect to API. Is the backend running?');
     } finally {
       setLoading(false);
     }
