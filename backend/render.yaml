@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: llm-shield-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
